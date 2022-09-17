@@ -1,11 +1,13 @@
 \PassOptionsToPackage{showlabels}{preview}
-\documentclass[preview]{standalone}
+% the conversion pdf->png in the standalone package fails for unknown reason, hence, VBA does the job to call gswin64
+\documentclass[preview,
+%convert={ghostscript, gsexe="c:/program files/gs/gs9.53.1/bin/gswin64",outname=snippet,outext=.png}
+]{standalone}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{graphicx}
-% No equation numbering (if package amsmath is used):
-\makeatletter
-\renewcommand\tagform@[1]{}
-\makeatother
+% Unfortunately, supressing equ numbering supresses also showlabels: hence currently: (1), (1), (1),...
+
+
 
 
