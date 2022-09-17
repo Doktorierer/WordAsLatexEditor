@@ -9,11 +9,11 @@ This Word-.doc-file, which has VBA-Macros (only tested on MS Windows), tries to 
 
 Hence, we try to stay totally with Latex-Code in Word without any conversions or rich-text substitutions.
 
-The current VBA-Macros are basic, there are still many issues, and the code needs extensions, but the VBA-code works under these limitations.
+The current VBA-Macros are basic, there are still issues, and the code needs extensions, but the VBA-code works under some limitations.
 
 The VBA-code (see `LatexEditor.doc` or `LatexEditor.pdf`, with the helper file `preamble.tex` for the Latex-preamble of snippets) let you:
-* Preview displayed content inside word (ehh, latex): Activated environment at the moment: `equation`, `align`, `table`, `figure`. Currently, you can preview and delete all generated pictures at once only.
-* Format some common Latex-code to gray or even white, and format the sections into Word-headings.
-* Run Latex from Word
+* Preview displayed content inside word (ehh, latex): Activated environment at the moment: `equation`, `align`, `table`, `figure`, etc. Currently, you can preview and delete all generated pictures at once only.
+* Format some common Latex-code to gray or white, format the sections into Word-headings, and hide Latex-code
+* Run Latex from Word (first: unhide, delete previews, and make gray)
 
 For more documentation, see `LatexEditor.doc` or `LatexEditor.pdf`, or look into the VBA-code (which you have to do anyway to adjust a path and to unlock the shell-code, which is usually detected by anti-virus programs as dangerous code, usually while saving the .doc)
