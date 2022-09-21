@@ -1,0 +1,547 @@
+Option Explicit
+
+
+Dim preambleSnippet As String
+Dim GS As String                'path to the pdf->png converter program: either to "gswin32.exe" or "gswin64.exe"
+
+
+Sub makeLaTeXgrey()
+ 
+ Call formatText(wdColorGray25)
+ 
+End Sub
+
+Sub makeLaTeXwhite()
+
+Call formatText(wdColorWhite)
+
+End Sub
+
+Sub makeHideText()
+
+Call formatText(i:=wdColorGray50, hide:=True)
+
+End Sub
+
+
+Sub makeDelText()
+
+Dim response
+
+response = MsgBox("Will delete all found Latex markup! Are you really sure?", vbYesNo)
+ 
+If response = vbYes Then
+    Call formatText(i:=wdColorGray50, del:=True)
+End If
+
+End Sub
+
+'Color with colorindex i
+Sub formatText(i As WdColor, Optional hide As Boolean = False, Optional del As Boolean = False)
+
+Call formatMarkup("\\begin\{equation\}*\\end\{equation\}", i, hide, del)
+Call formatMarkup("\\begin\{table\}*\\end\{table\}", i, hide, del)
+Call formatMarkup("\\begin\{figure\}*\\end\{figure\}", i, hide, del)
+Call formatMarkup("\\begin\{align\}*\\end\{align\}", i, hide, del)
+Call formatMarkup("\\begin\{multline\}*\\end\{multline\}", i, hide, del)
+Call formatMarkup("\\begin\{gather\}*\\end\{gather\}", i, hide, del)
+Call formatMarkup("\\begin\{alignat\}*\\end\{alignat\}", i, hide, del)
+Call formatMarkup("\\begin\{flalign\}*\\end\{flalign\}", i, hide, del)
+Call formatMarkup("\\begin\{abstract\}*\\end\{abstract\}", i, hide, del)
+Call formatMarkup("\\begin\{document\}", i, hide, del)
+Call formatMarkup("\\end\{document\}", i, hide, del)
+Call formatMarkup("\\title\{", i, hide, del)
+Call formatMarkup("\\ref\{", i, hide, del)
+Call formatMarkup("\\eqref\{", i, hide, del)
+Call formatMarkup("\\author\{", i, hide, del)
+Call formatMarkup("\\date\{", i, hide, del)
+Call formatMarkup("\\section\{", i, hide, del)
+Call formatMarkup("\\subsection\{", i, hide, del)
+Call formatMarkup("\\subsubsection\{", i, hide, del)
+Call formatMarkup("\\usepackage\{*\}", i, hide, del)
+Call formatMarkup("\\documentclass\{*\}", i, hide, del)
+Call formatMarkup("\\maketitle", i, hide, del)
+Call formatMarkup("\\begin\{itemize\}", i, hide, del)
+Call formatMarkup("\\end\{itemize\}", i, hide, del)
+Call formatMarkup("\\begin\{enumerate\}", i, hide, del)
+Call formatMarkup("\\end\{enumerate\}", i, hide, del)
+Call formatMarkup("\}", i, hide, del)  'ATTENTION: this is dangerous, but a quick fix
+
+End Sub
+
+
+
+
+
+
+
+
+Sub previewSnippets()
+
+'If not yet set: Set the path of the .pdf->.png converter program
+If GSpath = "" Then
+   Call setGSpath
+End If
+
+Call readTemplate 'read the tex-preamble for the snippets
+
+Call FindSnippet("\\begin\{equation\}*\\end\{equation\}")
+Call FindSnippet("\\begin\{table\}*\\end\{table\}")
+Call FindSnippet("\\begin\{figure\}*\\end\{figure\}")
+Call FindSnippet("\\begin\{align\}*\\end\{align\}")
+Call FindSnippet("\\begin\{multline\}*\\end\{multline\}")
+Call FindSnippet("\\begin\{gather\}*\\end\{gather\}")
+Call FindSnippet("\\begin\{alignat\}*\\end\{alignat\}")
+Call FindSnippet("\\begin\{flalign\}*\\end\{flalign\}")
+
+End Sub
+
+
+Sub FindSnippet(Optional str As String = "\\bibliography\{*\}")
+
+Dim StrFnd As String
+Dim i As Long
+Dim shp As Word.Shape
+
+'Application.ScreenUpdating = False
+ 
+With ActiveDocument.Range
+  With .Find
+    .ClearFormatting
+    .Replacement.ClearFormatting
+    .Text = str
+    .Replacement.Text = ""
+    .MatchWildcards = True
+    .Wrap = wdFindStop
+    .Forward = True
+    .Format = False
+    .Execute
+  End With
+  Do While .Find.Found
+    i = i + 1
+    StrFnd = StrFnd & vbCr & .Text
+       
+    Call WriteSnippet(.Text)
+
+    Call ExecLaTeX
+
+    Call ConvertPDF
+
+   .Select 'perhaps the "find"-range was unselected. adjust in final code
+    Set shp = ActiveDocument.Shapes.AddPicture( _
+    FileName:="snippet.png", _
+    LinkToFile:=False, SaveWithDocument:=True, _
+    Left:=0, Top:=Selection.Paragraphs(1).Range.Information(wdVerticalPositionRelativeToTextBoundary), _
+    Width:=400, Height:=40, Anchor:=Selection.Range)
+    shp.WrapFormat.Type = wdWrapFront
+    'shp.WrapFormat.Type = wdWrapTopBottom
+    shp.ScaleHeight 1#, msoTrue
+    shp.ScaleWidth 1#, msoTrue
+    .Collapse wdCollapseEnd
+    .Find.Execute
+  Loop
+  
+  End With
+  
+'Application.ScreenUpdating = True
+
+'MsgBox i & " instances found: " & StrFnd
+
+
+End Sub
+ 
+
+'Read the tex-template with the preamble, which is in file "preamble.tex"
+Sub readTemplate()
+  
+  Dim fso As New FileSystemObject
+  ' If error here: Tick "Microsoft Scripting Runtime" in the VB-editor under: under Tools->References
+  Dim tso As Object
+  Dim fn As String
+  
+  fn = ActiveDocument.Path & Application.PathSeparator & "preamble.tex"
+  
+  If Dir(fn) <> "" Then
+    Set tso = fso.OpenTextFile(fn, 1, False, 0)
+    ' arguments of "OpenTextFile: file, 1/2/3 (read/write/append), create?, -2/-1/0 (encoding: default/utf/ascii)
+    preambleSnippet = tso.ReadAll
+    tso.Close
+  Else
+       MsgBox fn & " does not exist."
+  End If
+   
+  
+  Set tso = Nothing
+  Set fso = Nothing
+  
+End Sub
+
+' Write the .tex-snippet to a file
+Sub WriteSnippet(ByVal texSnippet As String)
+
+    Dim fso As New FileSystemObject
+    ' If error here error, tick "Microsoft Scripting Runtime" in the VB-editor under: Tools->References
+    Dim tso As Object
+    
+    Set tso = fso.OpenTextFile("snippet.tex", 2, True, 0)
+    ' arguments of "OpenTextFile: file, 1/2/3 (read/write/append), create?, -2/-1/0 (encoding: default/utf/ascii)
+    
+    With tso
+        .WriteLine preambleSnippet
+        .WriteLine "\begin{document}"
+        .WriteLine texSnippet
+        .WriteLine "\end{document}"
+        .Close
+    End With
+    
+    Set tso = Nothing
+    Set fso = Nothing
+    
+End Sub
+
+'Execute LateX on the snippet to generate a .pdf of the snippet
+Sub ExecLaTeX()
+
+Dim wsh As Object
+
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (1/6)
+'Set wsh = VBA.CreateObject("WScript.Shell")
+
+wsh.Run "pdflatex snippet.tex", 1, True
+'arguments of "wsh.Run": cmdLine, windowStyle, waitOnReturn
+
+'If this throws an error, you have to install LaTeX, and the packages as loaded in the file "template.tex"
+
+End Sub
+
+' Convert the pdf-snippet to .png using an external software
+' I use ghostscript (freeware); you can use any other program. You have to adjust the path to gswin32 or gswin64
+Sub ConvertPDF()
+
+Dim wsh As Object
+
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (2/6)
+'Set wsh = CreateObject("WScript.Shell")
+
+wsh.Run """ & GSpath & "" -dBATCH -dNOPAUSE -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r300 -dUseCropBox -sOutputFile=""snippet.png"" ""snippet.pdf""", 1, True
+'arguments of "wsh.Run": cmdLine, windowStyle, waitOnReturn
+
+'If this throws an error, you have to install ghostcript, adapat the path, or use another conversion program (pdf->png)
+
+End Sub
+
+
+'Save the whole document as textfile and run LaTeX, in particular "latexmk", which should handle also bibtex etc.
+Sub RunLaTeX()
+
+Dim wsh As Object
+Dim fso As New FileSystemObject
+' If this throws and error, tick "Microsoft Scripting Runtime", in the VB-editor under: Tools->References
+Dim tso As Object
+Dim fn As String
+    
+Call unhideEverything
+Call delInlineShapes
+    
+fn = Split(ActiveDocument.Name, ".")(0)
+
+Set tso = fso.OpenTextFile(fn & ".tex", 2, True)
+' arguments of "OpenTextFile: file, 1/2/3 (read/write/append), create?, -2/-1/0 (encoding: default/utf/ascii)
+With tso
+  .WriteLine ActiveDocument.Range
+  .Close
+End With
+
+Set tso = Nothing
+Set fso = Nothing
+
+'CCOMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (3/6
+'Set wsh = VBA.CreateObject("WScript.Shell")
+wsh.Run "latexmk -pdf " & fn & ".tex", 1, True
+
+MsgBox fn & ".tex was compiled to " & fn & ".pdf. Open with default application: " & ActiveDocument.Path & Application.PathSeparator & fn & ".pdf"
+
+Call viewPdf
+
+End Sub
+
+
+' Search "str" in whole document and color, hide, or delete it
+Sub formatText(str As String, clr As WdColor, Optional hide As Boolean = False, Optional del As Boolean = False)
+
+    With ActiveDocument.Content.Find
+        .ClearFormatting
+        .Text = str
+        .MatchWildcards = True
+        .Replacement.Font.color = clr
+        If hide Then
+         .Replacement.Font.Hidden = hide
+        End If
+        If del Then
+         .Replacement.Text = ""
+        End If
+        .Forward = True
+        .Wrap = wdFindStop
+        .Execute ReplaceWith:="", Format:=True, Replace:=wdReplaceAll
+    End With
+         
+End Sub
+
+
+
+'Unhides all hidden text, including text in the headers and footers.
+Sub unhideEverything()
+
+Dim rngStory As Range
+Dim rngToSearch As Range
+Dim rngResult As Range
+
+For Each rngStory In ActiveDocument.StoryRanges
+               Set rngToSearch = rngStory
+    Set rngResult = rngToSearch.Duplicate
+
+    Do
+        If rngResult.Font.Hidden Then
+            rngResult.Font.Hidden = False
+
+        End If
+        rngResult.MoveStart wdWord
+        rngResult.End = rngToSearch.End
+    Loop Until rngResult.Find.Found = False
+
+    Next rngStory
+
+End Sub
+
+'Format the LaTeX section commands into word headings, and also the title, author, date
+Sub Section2Heading()
+
+With ActiveDocument.Range.Find
+
+  .ClearFormatting
+  .Replacement.ClearFormatting
+  .Replacement.Text = ""
+  .Forward = True
+  .Format = True
+  .Wrap = wdFindContinue
+  .MatchWildcards = True
+  
+   .Text = "\\section\{*\}"
+   .Replacement.Style = "Heading 1"
+   .Execute Replace:=wdReplaceAll
+   
+   .Text = "\\subsection\{*\}"
+   .Replacement.Style = "Heading 2"
+   .Execute Replace:=wdReplaceAll
+   
+   .Text = "\\subsubsection\{*\}"
+   .Replacement.Style = "Heading 3"
+   .Execute Replace:=wdReplaceAll
+   
+   .Text = "\\subsubsubsection\{*\}"
+   .Replacement.Style = "Heading 4"
+   .Execute Replace:=wdReplaceAll
+   
+   .Text = "\\title\{*\}"
+   .Replacement.Style = "Title"
+   .Execute Replace:=wdReplaceAll
+   
+   .Text = "\\author\{*\}"
+   .Replacement.Style = "Subtitle"
+   .Execute Replace:=wdReplaceAll
+   
+    .Text = "\\date\{*\}"
+   .Replacement.Style = "Subtitle"
+   .Execute Replace:=wdReplaceAll
+   
+End With
+
+End Sub
+
+' Delete all shapes (including the pictures) from current document
+Sub delShapes()
+
+Dim i As Integer
+
+' Delete shapes in canvas layers
+For i = ActiveDocument.Shapes.Count To 1 Step -1
+    'If  ActiveDocument.Shapes(i).Type = msoPicture
+    ActiveDocument.Shapes(i).delete
+Next i
+
+Call delInlineShapes
+
+End Sub
+
+
+' Delete shapes in the text layer of word. They can interfer with text
+Sub delInlineShapes()
+
+Dim oShp As InlineShape
+
+For Each oShp In ActiveDocument.InlineShapes
+    oShp.delete
+Next
+
+
+End Sub
+
+
+Sub Shapes2InlineShapes()
+
+Dim s As Shape
+Dim oShp As InlineShape
+
+For Each s In ActiveDocument.Shapes
+ If s.Type = msoPicture Then
+' s.WrapFormat.Type = wdWrapTopBottom
+ s.ConvertToInlineShape
+ End If
+Next s
+
+'For Each oShp In ActiveDocument.InlineShapes
+'With oShp.WrapFormat
+' .Type = wdWrapTopBottom
+' .Side = wdWrapBoth
+'End With
+'Next oShp
+
+End Sub
+
+
+
+Sub viewPdf()
+
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (4/6)
+'CreateObject("Shell.Application").Open (ActiveDocument.Path & Application.PathSeparator & fn & ".pdf")
+
+End Sub
+
+
+
+Sub viewPdfAsDoc()
+
+Documents.Open FileName:=Application.ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf", ConfirmConversions:=False
+
+End Sub
+
+
+Sub setGSpath()
+
+Dim version As String
+Dim ver32 As String
+Dim ver64 As String
+
+ver64 = "C:\Program Files\gs\"
+ver32 = "C:\Program Files (x86)\gs\"
+
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (5/6)
+'version = dir(ver64 & "gs*", vbDirectory)
+If version <> "" Then
+    GSpath = ver64 & version & "\bin\gswin64c.exe" ' ...c.exe is console application, else a gui-window opens
+    'MsgBox GSpath
+Else
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (6/6)
+'    version = dir(ver32 & "gs*", vbDirectory)
+    If version <> "" Then
+        GSpath = ver32 & version & "\bin\gswin32c.exe"
+        'MsgBox GSpath
+    End If
+End If
+
+If GSpath = "" Then
+ MsgBox "Path to ghostcript not found. Ghostcript required for pdf->png conversion. Tried paths: " & ver64 & " and " & ver32
+Else
+ 'MsgBox GSpath
+End If
+
+End Sub
+
+
+
+Sub testRegex()
+
+'abr    same as       meaning
+'\d     [0-9]         Any single digit
+'\D     [^0-9]        Any single character that's not a digit
+'\w     [a-zA-Z0-9_]  Any word character
+'\W     [^a-zA-Z0-9_] Any non-word character
+'\s     [ \r\t\n\f]   Any space character
+'\S     [^ \r\t\n\f]  Any non-space character
+'\n     [\n]          New line
+
+'^ Match must occur at start of string
+'$ Match must occur at end of string
+'. Matches any character except newline \n
+'? Match zero or one of the pattern defined before it
+'* Match zero or more of the pattern defined before it.
+'+ Match at least one, or more, of the pattern defined before it.
+'| OR operator
+
+
+Call formatByRegexThreeGroups("(\\ref\{)([ \S]*)(\})", wdColorGray20)
+Call formatByRegexThreeGroups("(\\begin\{equation\})([\s\S]*)(\\end\{equation\})", wdColorGray20)
+
+
+End Sub
+
+'Search a regex-expression in document that has three groups; format only the first and the third group.
+Sub formatByRegexThreeGroups(s As String, clr As WdColor, Optional hide As Boolean = False)
+
+    Dim regex As New regExp
+    Dim matchCol As matchCollection
+    Dim match
+    'Dim s As String
+    'Dim s0 As String
+    'Dim s1 As String
+    'Dim s2 As String
+    Dim l0 As Integer
+    Dim l1 As Integer
+    Dim l2 As Integer
+    
+    With regex
+      .Pattern = s
+      '.IgnoreCase = True
+       .Global = True
+       'Selection.Text = .Replace(Selection.Text, "Replaced") 'only if string is an input
+       Set matchCol = .Execute(ActiveDocument.Content.Text)
+    End With
+    
+    For Each match In matchCol  ' Iterate Matches collection.
+      'match.FirstIndex 'zero-based offset from the beginning of the search string
+      'match.Length
+      'match.Value
+     With match
+      's0 = .SubMatches(0) 'submatches, i.e. the match in (...) are just strings
+      's1 = .SubMatches(1)
+      's2 = .SubMatches(2)
+      l0 = Len(.SubMatches(0))
+      l1 = Len(.SubMatches(1))
+      l2 = Len(.SubMatches(2))
+      ActiveDocument.Range(.FirstIndex, .FirstIndex + .Length).Font.Bold = True
+      ActiveDocument.Range(.FirstIndex, .FirstIndex + l0).Font.color = clr
+      'ActiveDocument.Range(.FirstIndex + l0, .FirstIndex + l0 + l1).Font.color = wdColorGreen
+      ActiveDocument.Range(.FirstIndex + l0 + l1, .FirstIndex + l0 + l1 + l2).Font.color = clr
+       If hide Then
+         ActiveDocument.Range(.FirstIndex, .FirstIndex + l0).Font.Hidden = True
+         ActiveDocument.Range(.FirstIndex + l0 + l1, .FirstIndex + l0 + l1 + l2).Font.Hidden = True
+      End If
+      End With
+    Next match
+    
+
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+
