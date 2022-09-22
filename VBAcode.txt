@@ -2,24 +2,27 @@ Option Explicit
 
 
 Dim preambleSnippet As String
-Dim GS As String                'path to the pdf->png converter program: either to "gswin32.exe" or "gswin64.exe"
+Dim GSpath As String                'path to the pdf->png converter program: either to "gswin32.exe" or "gswin64.exe"
+Dim eqCnt As Integer
+Dim tabCnt As Integer
+Dim figCnt As Integer
 
 
 Sub makeLaTeXgrey()
  
- Call formatText(wdColorGray25)
+ Call formatMarkup(wdColorGray25)
  
 End Sub
 
 Sub makeLaTeXwhite()
 
-Call formatText(wdColorWhite)
+Call formatMarkup(wdColorWhite)
 
 End Sub
 
 Sub makeHideText()
 
-Call formatText(i:=wdColorGray50, hide:=True)
+Call formatMarkup(i:=wdColorGray50, hide:=True)
 
 End Sub
 
@@ -31,41 +34,45 @@ Dim response
 response = MsgBox("Will delete all found Latex markup! Are you really sure?", vbYesNo)
  
 If response = vbYes Then
-    Call formatText(i:=wdColorGray50, del:=True)
+    Call formatMarkup(i:=wdColorGray50, del:=True)
 End If
 
 End Sub
 
 'Color with colorindex i
-Sub formatText(i As WdColor, Optional hide As Boolean = False, Optional del As Boolean = False)
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (1/7) WHAT THE HELL !!!!
+Sub formatMarkup(i As WdColor, Optional hide As Boolean = False, Optional del As Boolean = False)
 
-Call formatMarkup("\\begin\{equation\}*\\end\{equation\}", i, hide, del)
-Call formatMarkup("\\begin\{table\}*\\end\{table\}", i, hide, del)
-Call formatMarkup("\\begin\{figure\}*\\end\{figure\}", i, hide, del)
-Call formatMarkup("\\begin\{align\}*\\end\{align\}", i, hide, del)
-Call formatMarkup("\\begin\{multline\}*\\end\{multline\}", i, hide, del)
-Call formatMarkup("\\begin\{gather\}*\\end\{gather\}", i, hide, del)
-Call formatMarkup("\\begin\{alignat\}*\\end\{alignat\}", i, hide, del)
-Call formatMarkup("\\begin\{flalign\}*\\end\{flalign\}", i, hide, del)
-Call formatMarkup("\\begin\{abstract\}*\\end\{abstract\}", i, hide, del)
-Call formatMarkup("\\begin\{document\}", i, hide, del)
-Call formatMarkup("\\end\{document\}", i, hide, del)
-Call formatMarkup("\\title\{", i, hide, del)
-Call formatMarkup("\\ref\{", i, hide, del)
-Call formatMarkup("\\eqref\{", i, hide, del)
-Call formatMarkup("\\author\{", i, hide, del)
-Call formatMarkup("\\date\{", i, hide, del)
-Call formatMarkup("\\section\{", i, hide, del)
-Call formatMarkup("\\subsection\{", i, hide, del)
-Call formatMarkup("\\subsubsection\{", i, hide, del)
-Call formatMarkup("\\usepackage\{*\}", i, hide, del)
-Call formatMarkup("\\documentclass\{*\}", i, hide, del)
-Call formatMarkup("\\maketitle", i, hide, del)
-Call formatMarkup("\\begin\{itemize\}", i, hide, del)
-Call formatMarkup("\\end\{itemize\}", i, hide, del)
-Call formatMarkup("\\begin\{enumerate\}", i, hide, del)
-Call formatMarkup("\\end\{enumerate\}", i, hide, del)
-Call formatMarkup("\}", i, hide, del)  'ATTENTION: this is dangerous, but a quick fix
+Dim wildCardPattern As Variant
+Dim s As Variant
+
+wildCardPattern = Array( _
+"\\begin\{equation\}*\\end\{equation\}", _
+"\\begin\{table\}*\\end\{table\}", _
+"\\begin\{figure\}*\\end\{figure\}", _
+"\\begin\{align\}*\\end\{align\}", _
+"\\begin\{multline\}*\\end\{multline\}", _
+"\\begin\{gather\}*\\end\{gather\}", _
+"\\begin\{alignat\}*\\end\{alignat\}", _
+"\\begin\{flalign\}*\\end\{flalign\}", _
+"\\begin\{abstract\}*\\end\{abstract\}", _
+"\\begin\{document\}", "\\end\{document\}", _
+"\\title\{", "\\ref\{", _
+"\\eqref\{", _
+"\\author\{", "\\date\{", _
+"\\section\{", "\\subsection\{", "\\subsubsection\{", _
+"\\usepackage*\{*\}", _
+"\\documentclass*\{*\}", _
+"\\maketitle", _
+"\\begin\{itemize\}", "\\end\{itemize\}", _
+"\\begin\{enumerate\}", "\\end\{enumerate\}", _
+"\}" _
+)
+
+For Each s In wildCardPattern
+ Call formatText(CStr(s), i, hide, del)
+Next s
+'ATTENTION: this is dangerous, but a quick fix
 
 End Sub
 
@@ -81,23 +88,29 @@ Sub previewSnippets()
 'If not yet set: Set the path of the .pdf->.png converter program
 If GSpath = "" Then
    Call setGSpath
+   MsgBox GSpath
 End If
 
 Call readTemplate 'read the tex-preamble for the snippets
 
-Call FindSnippet("\\begin\{equation\}*\\end\{equation\}")
-Call FindSnippet("\\begin\{table\}*\\end\{table\}")
-Call FindSnippet("\\begin\{figure\}*\\end\{figure\}")
-Call FindSnippet("\\begin\{align\}*\\end\{align\}")
-Call FindSnippet("\\begin\{multline\}*\\end\{multline\}")
-Call FindSnippet("\\begin\{gather\}*\\end\{gather\}")
-Call FindSnippet("\\begin\{alignat\}*\\end\{alignat\}")
-Call FindSnippet("\\begin\{flalign\}*\\end\{flalign\}")
+eqCnt = 0
+figCnt = 0
+tabCnt = 0
+
+
+Call FindSnippet(1, "\\begin\{equation\}*\\end\{equation\}")
+Call FindSnippet(3, "\\begin\{table\}*\\end\{table\}")
+Call FindSnippet(2, "\\begin\{figure\}*\\end\{figure\}")
+Call FindSnippet(1, "\\begin\{align\}*\\end\{align\}")
+Call FindSnippet(1, "\\begin\{multline\}*\\end\{multline\}")
+Call FindSnippet(1, "\\begin\{gather\}*\\end\{gather\}")
+Call FindSnippet(1, "\\begin\{alignat\}*\\end\{alignat\}")
+Call FindSnippet(1, "\\begin\{flalign\}*\\end\{flalign\}")
 
 End Sub
 
 
-Sub FindSnippet(Optional str As String = "\\bibliography\{*\}")
+Sub FindSnippet(j As Integer, Optional str As String = "\\bibliography\{*\}")
 
 Dim StrFnd As String
 Dim i As Long
@@ -121,7 +134,7 @@ With ActiveDocument.Range
     i = i + 1
     StrFnd = StrFnd & vbCr & .Text
        
-    Call WriteSnippet(.Text)
+    Call WriteSnippet(.Text, j)
 
     Call ExecLaTeX
 
@@ -177,18 +190,31 @@ Sub readTemplate()
 End Sub
 
 ' Write the .tex-snippet to a file
-Sub WriteSnippet(ByVal texSnippet As String)
+Sub WriteSnippet(ByVal texSnippet As String, i As Integer)
 
     Dim fso As New FileSystemObject
     ' If error here error, tick "Microsoft Scripting Runtime" in the VB-editor under: Tools->References
     Dim tso As Object
+    Dim cntStr As String
     
     Set tso = fso.OpenTextFile("snippet.tex", 2, True, 0)
     ' arguments of "OpenTextFile: file, 1/2/3 (read/write/append), create?, -2/-1/0 (encoding: default/utf/ascii)
     
+    If i = 1 Then
+        cntStr = "\setcounter{equation}{" & eqCnt & "}"
+         eqCnt = eqCnt + 1
+    ElseIf i = 2 Then
+        cntStr = "\setcounter{figure}{" & figCnt & "}"
+        figCnt = figCnt + 1
+    ElseIf i = 3 Then
+         cntStr = "\setcounter{table}{" & tabCnt & "}"
+         tabCnt = tabCnt + 1
+    End If
+    
     With tso
         .WriteLine preambleSnippet
         .WriteLine "\begin{document}"
+        .WriteLine cntStr
         .WriteLine texSnippet
         .WriteLine "\end{document}"
         .Close
@@ -222,8 +248,8 @@ Dim wsh As Object
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (2/6)
 'Set wsh = CreateObject("WScript.Shell")
-
-wsh.Run """ & GSpath & "" -dBATCH -dNOPAUSE -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r300 -dUseCropBox -sOutputFile=""snippet.png"" ""snippet.pdf""", 1, True
+'MsgBox "Before Gswin"
+wsh.Run """" & GSpath & """ -dBATCH -dNOPAUSE -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r300 -dUseCropBox -sOutputFile=""snippet.png"" ""snippet.pdf""", 1, True
 'arguments of "wsh.Run": cmdLine, windowStyle, waitOnReturn
 
 'If this throws an error, you have to install ghostcript, adapat the path, or use another conversion program (pdf->png)
@@ -366,7 +392,7 @@ Dim i As Integer
 ' Delete shapes in canvas layers
 For i = ActiveDocument.Shapes.Count To 1 Step -1
     'If  ActiveDocument.Shapes(i).Type = msoPicture
-    ActiveDocument.Shapes(i).delete
+    ActiveDocument.Shapes(i).Delete
 Next i
 
 Call delInlineShapes
@@ -380,7 +406,7 @@ Sub delInlineShapes()
 Dim oShp As InlineShape
 
 For Each oShp In ActiveDocument.InlineShapes
-    oShp.delete
+    oShp.Delete
 Next
 
 
@@ -413,7 +439,7 @@ End Sub
 Sub viewPdf()
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (4/6)
-'CreateObject("Shell.Application").Open (ActiveDocument.Path & Application.PathSeparator & fn & ".pdf")
+'CreateObject("Shell.Application").Open (ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf")
 
 End Sub
 
@@ -436,13 +462,13 @@ ver64 = "C:\Program Files\gs\"
 ver32 = "C:\Program Files (x86)\gs\"
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (5/6)
-'version = dir(ver64 & "gs*", vbDirectory)
+'version = Dir(ver64 & "gs*", vbDirectory)
 If version <> "" Then
     GSpath = ver64 & version & "\bin\gswin64c.exe" ' ...c.exe is console application, else a gui-window opens
     'MsgBox GSpath
 Else
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (6/6)
-'    version = dir(ver32 & "gs*", vbDirectory)
+'    version = Dir(ver32 & "gs*", vbDirectory)
     If version <> "" Then
         GSpath = ver32 & version & "\bin\gswin32c.exe"
         'MsgBox GSpath
@@ -531,6 +557,8 @@ Sub formatByRegexThreeGroups(s As String, clr As WdColor, Optional hide As Boole
     
 
 End Sub
+
+
 
 
 
