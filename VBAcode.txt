@@ -31,7 +31,7 @@ Sub makeDelText()
 
 Dim response
 
-response = MsgBox("Will delete all found Latex markup! Are you really sure?", vbYesNo)
+response = MsgBox("This will delete all found Latex markup! Are you really sure?", vbYesNo)
  
 If response = vbYes Then
     Call formatMarkup(i:=wdColorGray50, del:=True)
@@ -39,8 +39,8 @@ End If
 
 End Sub
 
-'Color with colorindex i
-'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (1/7) WHAT THE HELL !!!!
+'Color with color i
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (0/7), WHY THE HELL IS THIS SUSPICIOUS
 Sub formatMarkup(i As WdColor, Optional hide As Boolean = False, Optional del As Boolean = False)
 
 Dim wildCardPattern As Variant
@@ -77,12 +77,6 @@ Next s
 End Sub
 
 
-
-
-
-
-
-
 Sub previewSnippets()
 
 'If not yet set: Set the path of the .pdf->.png converter program
@@ -97,7 +91,6 @@ eqCnt = 0
 figCnt = 0
 tabCnt = 0
 
-
 Call FindSnippet(1, "\\begin\{equation\}*\\end\{equation\}")
 Call FindSnippet(3, "\\begin\{table\}*\\end\{table\}")
 Call FindSnippet(2, "\\begin\{figure\}*\\end\{figure\}")
@@ -108,6 +101,7 @@ Call FindSnippet(1, "\\begin\{alignat\}*\\end\{alignat\}")
 Call FindSnippet(1, "\\begin\{flalign\}*\\end\{flalign\}")
 
 End Sub
+
 
 
 Sub FindSnippet(j As Integer, Optional str As String = "\\bibliography\{*\}")
@@ -231,12 +225,10 @@ Sub ExecLaTeX()
 Dim wsh As Object
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (1/6)
-'Set wsh = VBA.CreateObject("WScript.Shell")
+Set wsh = VBA.CreateObject("WScript.Shell")
 
 wsh.Run "pdflatex snippet.tex", 1, True
 'arguments of "wsh.Run": cmdLine, windowStyle, waitOnReturn
-
-'If this throws an error, you have to install LaTeX, and the packages as loaded in the file "template.tex"
 
 End Sub
 
@@ -247,7 +239,7 @@ Sub ConvertPDF()
 Dim wsh As Object
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (2/6)
-'Set wsh = CreateObject("WScript.Shell")
+Set wsh = CreateObject("WScript.Shell")
 'MsgBox "Before Gswin"
 wsh.Run """" & GSpath & """ -dBATCH -dNOPAUSE -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r300 -dUseCropBox -sOutputFile=""snippet.png"" ""snippet.pdf""", 1, True
 'arguments of "wsh.Run": cmdLine, windowStyle, waitOnReturn
@@ -282,7 +274,7 @@ Set tso = Nothing
 Set fso = Nothing
 
 'CCOMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (3/6
-'Set wsh = VBA.CreateObject("WScript.Shell")
+Set wsh = VBA.CreateObject("WScript.Shell")
 wsh.Run "latexmk -pdf " & fn & ".tex", 1, True
 
 MsgBox fn & ".tex was compiled to " & fn & ".pdf. Open with default application: " & ActiveDocument.Path & Application.PathSeparator & fn & ".pdf"
@@ -292,7 +284,7 @@ Call viewPdf
 End Sub
 
 
-' Search "str" in whole document and color, hide, or delete it
+'Search "str" in whole document and color, hide, or delete it
 Sub formatText(str As String, clr As WdColor, Optional hide As Boolean = False, Optional del As Boolean = False)
 
     With ActiveDocument.Content.Find
@@ -303,13 +295,28 @@ Sub formatText(str As String, clr As WdColor, Optional hide As Boolean = False, 
         If hide Then
          .Replacement.Font.Hidden = hide
         End If
-        If del Then
-         .Replacement.Text = ""
-        End If
         .Forward = True
         .Wrap = wdFindStop
         .Execute ReplaceWith:="", Format:=True, Replace:=wdReplaceAll
     End With
+    
+    If del Then
+     
+     With ActiveDocument.Content.Find
+     Selection.Find.ClearFormatting
+     Selection.Find.Replacement.ClearFormatting
+     With Selection.Find
+        .Text = str
+        .Replacement.Text = ""
+        .Forward = True
+        .Wrap = wdFindContinue
+        .Format = False
+        .MatchWildcards = True
+    End With
+    Selection.Find.Execute Replace:=wdReplaceAll
+    End With
+    
+    End If
          
 End Sub
 
@@ -438,8 +445,23 @@ End Sub
 
 Sub viewPdf()
 
+Dim str As String
+Dim WshShell
+Dim fs
+
+'COMMENT FOLLOWING LINES OUT
+Set WshShell = CreateObject("WScript.Shell")
+str = WshShell.SpecialFolders("MyDocuments")
+
+'strangely the files are sometimes placed here:
+'COMMENT FOLLOWING LINE OUT
+Set fs = CreateObject("Scripting.FileSystemObject")
+MsgBox "Copy .tex and .pdf files to .doc folder from: " & str
+fs.CopyFile str & "\" & Split(ActiveDocument.Name, ".")(0) & ".pdf", ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf"
+fs.CopyFile str & "\" & Split(ActiveDocument.Name, ".")(0) & ".tex", ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".text"
+
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (4/6)
-'CreateObject("Shell.Application").Open (ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf")
+CreateObject("Shell.Application").Open (ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf")
 
 End Sub
 
@@ -462,13 +484,13 @@ ver64 = "C:\Program Files\gs\"
 ver32 = "C:\Program Files (x86)\gs\"
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (5/6)
-'version = Dir(ver64 & "gs*", vbDirectory)
+version = Dir(ver64 & "gs*", vbDirectory)
 If version <> "" Then
     GSpath = ver64 & version & "\bin\gswin64c.exe" ' ...c.exe is console application, else a gui-window opens
     'MsgBox GSpath
 Else
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (6/6)
-'    version = Dir(ver32 & "gs*", vbDirectory)
+    version = Dir(ver32 & "gs*", vbDirectory)
     If version <> "" Then
         GSpath = ver32 & version & "\bin\gswin32c.exe"
         'MsgBox GSpath

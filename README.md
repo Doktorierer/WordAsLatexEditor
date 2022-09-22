@@ -52,6 +52,10 @@ The VBA-code let you:
 * Run the VBA-macro (accessible through the new Latex-Ribbon) to preview: tables, equation, figure, align etc.
 * Prepare the file to your MS Word affine co-authors:  Convert the previews into inline pictures, and hide the markup completely
 
+## Caveats
+* Adjust the path to the example image test.jpg such that latex can find it
+* With RunLatex, it seems that .tex and .pdf are put into the personal folder, and not in the .doc folder. At the moment, the code tries to copy the two files back
+
 
 ### Bibliography
 There is no preview of bibliography. This can be done in 20 seconds manually. Run the runLaTeX-macro, or use your preferred Latex-editor to produce a .pdf of your work (which has the reference section), then view the .pdf with word, and paste the reference section at the end.
