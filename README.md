@@ -64,7 +64,6 @@ There is no preview of bibliography. This can be done in 20 seconds manually. Ru
 * Extend the recognized Latex markups, i.e., better the wildcard matches
 * The snippets when converted to inline-shapes do not wrap properly on a line on their own 
 * Only ASCII character files work surely. The conversion is not fully UTF compatible.
-* It seems that the delete markup button not yet works
 
 
 
