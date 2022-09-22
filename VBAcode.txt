@@ -82,8 +82,12 @@ Sub previewSnippets()
 'If not yet set: Set the path of the .pdf->.png converter program
 If GSpath = "" Then
    Call setGSpath
-   MsgBox GSpath
 End If
+
+' The default path of VBA is the iconvenient MyDocuments
+ChDrive Application.ActiveDocument.Path
+ChDir Application.ActiveDocument.Path
+
 
 Call readTemplate 'read the tex-preamble for the snippets
 
@@ -233,12 +237,12 @@ wsh.Run "pdflatex snippet.tex", 1, True
 End Sub
 
 ' Convert the pdf-snippet to .png using an external software
-' I use ghostscript (freeware); you can use any other program. You have to adjust the path to gswin32 or gswin64
+' I use ghostscript (freeware); you can use any other program.
 Sub ConvertPDF()
 
 Dim wsh As Object
 
-'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (2/6)
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
 Set wsh = CreateObject("WScript.Shell")
 'MsgBox "Before Gswin"
 wsh.Run """" & GSpath & """ -dBATCH -dNOPAUSE -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r300 -dUseCropBox -sOutputFile=""snippet.png"" ""snippet.pdf""", 1, True
@@ -263,6 +267,11 @@ Call delInlineShapes
     
 fn = Split(ActiveDocument.Name, ".")(0)
 
+' The default path of VBA is unfortunately MyDocuments
+ChDrive Application.ActiveDocument.Path
+ChDir Application.ActiveDocument.Path
+
+
 Set tso = fso.OpenTextFile(fn & ".tex", 2, True)
 ' arguments of "OpenTextFile: file, 1/2/3 (read/write/append), create?, -2/-1/0 (encoding: default/utf/ascii)
 With tso
@@ -273,7 +282,7 @@ End With
 Set tso = Nothing
 Set fso = Nothing
 
-'CCOMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (3/6
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
 Set wsh = VBA.CreateObject("WScript.Shell")
 wsh.Run "latexmk -pdf " & fn & ".tex", 1, True
 
@@ -445,22 +454,19 @@ End Sub
 
 Sub viewPdf()
 
-Dim str As String
-Dim WshShell
-Dim fs
+'Dim str As String
+'Dim WshShell
+'Dim fs
 
-'COMMENT FOLLOWING LINES OUT
-Set WshShell = CreateObject("WScript.Shell")
-str = WshShell.SpecialFolders("MyDocuments")
+'No longer required code, because default-directory is set to document directory,
+'Set WshShell = CreateObject("WScript.Shell")
+'str = WshShell.SpecialFolders("MyDocuments")
+'Set fs = CreateObject("Scripting.FileSystemObject")
+'MsgBox "Copy .tex and .pdf files to .doc folder from: " & str
+'fs.CopyFile str & "\" & Split(ActiveDocument.Name, ".")(0) & ".pdf", ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf"
+'fs.CopyFile str & "\" & Split(ActiveDocument.Name, ".")(0) & ".tex", ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".text"
 
-'strangely the files are sometimes placed here:
-'COMMENT FOLLOWING LINE OUT
-Set fs = CreateObject("Scripting.FileSystemObject")
-MsgBox "Copy .tex and .pdf files to .doc folder from: " & str
-fs.CopyFile str & "\" & Split(ActiveDocument.Name, ".")(0) & ".pdf", ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf"
-fs.CopyFile str & "\" & Split(ActiveDocument.Name, ".")(0) & ".tex", ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".text"
-
-'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (4/6)
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
 CreateObject("Shell.Application").Open (ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf")
 
 End Sub
@@ -469,6 +475,7 @@ End Sub
 
 Sub viewPdfAsDoc()
 
+'COMMENT FOLLOWING LINE OUT
 Documents.Open FileName:=Application.ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf", ConfirmConversions:=False
 
 End Sub
@@ -483,13 +490,13 @@ Dim ver64 As String
 ver64 = "C:\Program Files\gs\"
 ver32 = "C:\Program Files (x86)\gs\"
 
-'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (5/6)
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
 version = Dir(ver64 & "gs*", vbDirectory)
 If version <> "" Then
     GSpath = ver64 & version & "\bin\gswin64c.exe" ' ...c.exe is console application, else a gui-window opens
     'MsgBox GSpath
 Else
-'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED  (6/6)
+'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
     version = Dir(ver32 & "gs*", vbDirectory)
     If version <> "" Then
         GSpath = ver32 & version & "\bin\gswin32c.exe"
@@ -500,7 +507,7 @@ End If
 If GSpath = "" Then
  MsgBox "Path to ghostcript not found. Ghostcript required for pdf->png conversion. Tried paths: " & ver64 & " and " & ver32
 Else
- 'MsgBox GSpath
+ MsgBox "Conversion software ghostcript was found:" & GSpath
 End If
 
 End Sub
