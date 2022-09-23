@@ -46,6 +46,23 @@ Sub formatMarkup(i As WdColor, Optional hide As Boolean = False, Optional del As
 Dim wildCardPattern As Variant
 Dim s As Variant
 
+'References, citations
+If hide Then
+ wildCardPattern = Array( _
+ "\\ref\{", "\\eqref\{", "\\cite*\{", "\\label\{" _
+)
+For Each s In wildCardPattern
+ Call formatText(CStr(s), i, hide, del)
+Next s
+Else
+Call formatByRegexThreeGroups("(\\label\{)([, \w\d:-~_]*)(\})", i, wdColorBlue, False)
+  Call formatByRegexThreeGroups("(\\ref\{)([, \w\d:-~_]*)(\})", i, wdColorBlue, False)
+  Call formatByRegexThreeGroups("(\\eqref\{)([, \w\d:-~_]*)(\})", i, wdColorBlue, False)
+  Call formatByRegexThreeGroups("(\\cite[pt]?\{)([, \w\d:-_]*)(\})", i, wdColorBlue, False)
+  Call formatByRegexThreeGroups("(\\cite[pt]?\[[., \w\d;:-~_]*\]\{)([, \w\d:-]*)(\})", i, wdColorBlue, False)
+End If
+
+'Common patterns
 wildCardPattern = Array( _
 "\\begin\{equation\}*\\end\{equation\}", _
 "\\begin\{table\}*\\end\{table\}", _
@@ -57,22 +74,42 @@ wildCardPattern = Array( _
 "\\begin\{flalign\}*\\end\{flalign\}", _
 "\\begin\{abstract\}*\\end\{abstract\}", _
 "\\begin\{document\}", "\\end\{document\}", _
-"\\title\{", "\\ref\{", _
-"\\eqref\{", _
-"\\author\{", "\\date\{", _
-"\\section\{", "\\subsection\{", "\\subsubsection\{", _
-"\\usepackage*\{*\}", _
-"\\documentclass*\{*\}", _
+"\\begin\{frontmatter\}", "\\end\{frontmatter\}", _
+"\\begin\{keyword\}", "\\end\{keyword\}", _
+"\\section*\{", "\\subsection*\{", "\\subsubsection*\{", _
+"\\usepackage*\{*\}", "\\documentclass*\{*\}", _
 "\\maketitle", _
 "\\begin\{itemize\}", "\\end\{itemize\}", _
-"\\begin\{enumerate\}", "\\end\{enumerate\}", _
-"\}" _
+"\\begin\{enumerate\}", "\\end\{enumerate\}" _
+)
+
+'Application.ScreenUpdating = False
+
+For Each s In wildCardPattern
+ Call formatText(CStr(s), i, hide, del)
+Next s
+
+'Miscellanous patterns
+wildCardPattern = Array( _
+"\\ead\{", "\\corref\{*\}", "\\cortext*\{", "\\address\{", "\\journal\{*\}", _
+"\\medskip", "\\bigskip", "\\smallskip", "\\sep", _
+"\\bibliography\{*\}", _
+"\\title\{", _
+"\\author\{", "\\date\{", _
+"%%*^13" _
 )
 
 For Each s In wildCardPattern
  Call formatText(CStr(s), i, hide, del)
 Next s
-'ATTENTION: this is dangerous, but a quick fix
+
+
+Call formatText("\}", i, hide, del)
+
+'Application.ScreenUpdating = True
+
+MsgBox "Formatting macro completed."
+
 
 End Sub
 
@@ -229,7 +266,7 @@ Sub ExecLaTeX()
 Dim wsh As Object
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (1/6)
-Set wsh = VBA.CreateObject("WScript.Shell")
+'Set wsh = VBA.CreateObject("WScript.Shell")
 
 wsh.Run "pdflatex snippet.tex", 1, True
 'arguments of "wsh.Run": cmdLine, windowStyle, waitOnReturn
@@ -243,7 +280,7 @@ Sub ConvertPDF()
 Dim wsh As Object
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
-Set wsh = CreateObject("WScript.Shell")
+'Set wsh = CreateObject("WScript.Shell")
 'MsgBox "Before Gswin"
 wsh.Run """" & GSpath & """ -dBATCH -dNOPAUSE -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r300 -dUseCropBox -sOutputFile=""snippet.png"" ""snippet.pdf""", 1, True
 'arguments of "wsh.Run": cmdLine, windowStyle, waitOnReturn
@@ -283,7 +320,7 @@ Set tso = Nothing
 Set fso = Nothing
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
-Set wsh = VBA.CreateObject("WScript.Shell")
+'Set wsh = VBA.CreateObject("WScript.Shell")
 wsh.Run "latexmk -pdf " & fn & ".tex", 1, True
 
 MsgBox fn & ".tex was compiled to " & fn & ".pdf. Open with default application: " & ActiveDocument.Path & Application.PathSeparator & fn & ".pdf"
@@ -467,7 +504,7 @@ Sub viewPdf()
 'fs.CopyFile str & "\" & Split(ActiveDocument.Name, ".")(0) & ".tex", ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".text"
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
-CreateObject("Shell.Application").Open (ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf")
+'CreateObject("Shell.Application").Open (ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf")
 
 End Sub
 
@@ -540,8 +577,8 @@ Call formatByRegexThreeGroups("(\\begin\{equation\})([\s\S]*)(\\end\{equation\})
 
 End Sub
 
-'Search a regex-expression in document that has three groups; format only the first and the third group.
-Sub formatByRegexThreeGroups(s As String, clr As WdColor, Optional hide As Boolean = False)
+'Search a regex-expression in document that has three groups; format/hide first and the third group
+Sub formatByRegexThreeGroups(s As String, clr As WdColor, clrMiddle As WdColor, Optional hide As Boolean = False)
 
     Dim regex As New regExp
     Dim matchCol As matchCollection
@@ -553,6 +590,8 @@ Sub formatByRegexThreeGroups(s As String, clr As WdColor, Optional hide As Boole
     Dim l0 As Integer
     Dim l1 As Integer
     Dim l2 As Integer
+    Dim i As Integer
+    
     
     With regex
       .Pattern = s
@@ -562,7 +601,9 @@ Sub formatByRegexThreeGroups(s As String, clr As WdColor, Optional hide As Boole
        Set matchCol = .Execute(ActiveDocument.Content.Text)
     End With
     
-    For Each match In matchCol  ' Iterate Matches collection.
+    For i = matchCol.Count - 1 To 0 Step -1  'must iterate backwards such that index is correct while deleting
+    Set match = matchCol(i)
+    'For Each match In matchCol  ' Iterate Matches collection.
       'match.FirstIndex 'zero-based offset from the beginning of the search string
       'match.Length
       'match.Value
@@ -573,17 +614,21 @@ Sub formatByRegexThreeGroups(s As String, clr As WdColor, Optional hide As Boole
       l0 = Len(.SubMatches(0))
       l1 = Len(.SubMatches(1))
       l2 = Len(.SubMatches(2))
-      ActiveDocument.Range(.FirstIndex, .FirstIndex + .Length).Font.Bold = True
-      ActiveDocument.Range(.FirstIndex, .FirstIndex + l0).Font.color = clr
-      'ActiveDocument.Range(.FirstIndex + l0, .FirstIndex + l0 + l1).Font.color = wdColorGreen
-      ActiveDocument.Range(.FirstIndex + l0 + l1, .FirstIndex + l0 + l1 + l2).Font.color = clr
-       If hide Then
-         ActiveDocument.Range(.FirstIndex, .FirstIndex + l0).Font.Hidden = True
-         ActiveDocument.Range(.FirstIndex + l0 + l1, .FirstIndex + l0 + l1 + l2).Font.Hidden = True
+      If l0 = 0 Or l1 = 0 Or l2 = 0 Then
+         MsgBox "Submatches too short: (" & .SubMatches(0) & ")(" & .SubMatches(1) & ")(" & .SubMatches(2) & ")"
       End If
+      'ActiveDocument.Range(.FirstIndex, .FirstIndex + .Length).Font.Bold = True
+       If hide Then
+         'ActiveDocument.Range(.FirstIndex + l0 + l1, .FirstIndex + l0 + l1 + l2).Font.Hidden = True
+         ActiveDocument.Range(.FirstIndex, .FirstIndex + l0).Font.Hidden = True
+       Else
+         ActiveDocument.Range(.FirstIndex, .FirstIndex + l0).Font.color = clr
+         ActiveDocument.Range(.FirstIndex + l0, .FirstIndex + l0 + l1).Font.color = clrMiddle
+         ActiveDocument.Range(.FirstIndex + l0 + l1, .FirstIndex + l0 + l1 + l2).Font.color = clr
+       End If
       End With
-    Next match
-    
+    'Next match
+    Next i
 
 End Sub
 
