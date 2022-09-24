@@ -114,9 +114,38 @@ MsgBox "Formatting macro completed."
 End Sub
 
 
+Sub setGSpathManually()
+
+Dim f As Office.FileDialog
+Dim answer As Integer
+
+answer = MsgBox("Find ghostcript software manually via browsing? - " & _
+"You can find also inside the Latex program folder for existing installations " & _
+"(Texlive: ""C:\...\texlive\<year>\tlpkg\tlgs\bin\gswin64c.exe""; MikTeX likely: ""...\MikTex\...\mgs.exe"").", _
+vbQuestion + vbYesNo + vbDefaultButton2, "Search ghostcript on your own.")
+
+
+If answer = vbYes Then
+  Set f = Application.FileDialog(msoFileDialogFilePicker)
+  f.Show
+   If f.SelectedItems.Count > 0 Then ' Prüfen auf 'Abbrechen'-Button
+      GSpath = f.SelectedItems(1)
+      MsgBox GSpath
+   End If
+End If
+
+
+End Sub
+
+
+
 Sub previewSnippets()
 
 'If not yet set: Set the path of the .pdf->.png converter program
+If GSpath = "" Then
+   Call setGSpathManually
+End If
+
 If GSpath = "" Then
    Call setGSpath
 End If
