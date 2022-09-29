@@ -62,6 +62,7 @@ Call formatByRegexThreeGroups("(\\label\{)([, \w\d:-~_]*)(\})", i, wdColorBlue, 
   Call formatByRegexThreeGroups("(\\cite[pt]?\[[., \w\d;:-~_]*\]\{)([, \w\d:-]*)(\})", i, wdColorBlue, False)
 End If
 
+
 'Common patterns
 wildCardPattern = Array( _
 "\\begin\{equation\}*\\end\{equation\}", _
@@ -88,6 +89,8 @@ wildCardPattern = Array( _
 For Each s In wildCardPattern
  Call formatText(CStr(s), i, hide, del)
 Next s
+
+
 
 'Miscellanous patterns
 wildCardPattern = Array( _
@@ -170,6 +173,8 @@ Call FindSnippet(1, "\\begin\{gather\}*\\end\{gather\}")
 Call FindSnippet(1, "\\begin\{alignat\}*\\end\{alignat\}")
 Call FindSnippet(1, "\\begin\{flalign\}*\\end\{flalign\}")
 
+MsgBox "Number of LaTeX environments found: Mathematics: " & eqCnt & "; Figures: " & figCnt & "; Tables: " & tabCnt
+
 End Sub
 
 
@@ -235,18 +240,34 @@ Sub readTemplate()
   ' If error here: Tick "Microsoft Scripting Runtime" in the VB-editor under: under Tools->References
   Dim tso As Object
   Dim fn As String
+  'Dim wsh As Object
   
   fn = ActiveDocument.Path & Application.PathSeparator & "preamble.tex"
   
-  If Dir(fn) <> "" Then
-    Set tso = fso.OpenTextFile(fn, 1, False, 0)
-    ' arguments of "OpenTextFile: file, 1/2/3 (read/write/append), create?, -2/-1/0 (encoding: default/utf/ascii)
-    preambleSnippet = tso.ReadAll
-    tso.Close
-  Else
-       MsgBox fn & " does not exist."
+  ' if preamble does not exists, create one
+  If Len(Dir(fn)) = 0 Then
+   MsgBox "The required Latex-preamble file " & fn & " used for snippets does not exist. Creating it. You can edit it in notepad now or later."
+   Set tso = fso.OpenTextFile(fn, 2, True, 0)
+   ' arguments of "OpenTextFile: file, 1/2/3 (read/write/append), create?, -2/-1/0 (encoding: default/utf/ascii)
+   With tso
+        .WriteLine "\PassOptionsToPackage{showlabels}{preview}"
+        .WriteLine "\documentclass[preview]{standalone}"
+        .WriteLine "\usepackage{amsmath}"
+        .WriteLine "\usepackage{amssymb}"
+        .WriteLine "\usepackage{graphicx}"
+        .Close
+   End With
+   ' Allow to edit it in notepad "%windir%\system32\notepad.exe """
+   VBA.CreateObject("WScript.Shell").Run "notepad.exe """ & fn & """", 1, True
+   ' TRUE says wait
   End If
-   
+  
+  Set tso = fso.OpenTextFile(fn, 1, False, 0)
+    ' arguments of "OpenTextFile: file, 1/2/3 (read/write/append), create?, -2/-1/0 (encoding: default/utf/ascii)
+  
+  preambleSnippet = tso.ReadAll
+  
+  tso.Close
   
   Set tso = Nothing
   Set fso = Nothing
@@ -295,7 +316,7 @@ Sub ExecLaTeX()
 Dim wsh As Object
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED (1/6)
-'Set wsh = VBA.CreateObject("WScript.Shell")
+Set wsh = VBA.CreateObject("WScript.Shell")
 
 wsh.Run "pdflatex snippet.tex", 1, True
 'arguments of "wsh.Run": cmdLine, windowStyle, waitOnReturn
@@ -309,7 +330,7 @@ Sub ConvertPDF()
 Dim wsh As Object
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
-'Set wsh = CreateObject("WScript.Shell")
+Set wsh = CreateObject("WScript.Shell")
 'MsgBox "Before Gswin"
 wsh.Run """" & GSpath & """ -dBATCH -dNOPAUSE -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r300 -dUseCropBox -sOutputFile=""snippet.png"" ""snippet.pdf""", 1, True
 'arguments of "wsh.Run": cmdLine, windowStyle, waitOnReturn
@@ -349,7 +370,7 @@ Set tso = Nothing
 Set fso = Nothing
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
-'Set wsh = VBA.CreateObject("WScript.Shell")
+Set wsh = VBA.CreateObject("WScript.Shell")
 wsh.Run "latexmk -pdf " & fn & ".tex", 1, True
 
 MsgBox fn & ".tex was compiled to " & fn & ".pdf. Open with default application: " & ActiveDocument.Path & Application.PathSeparator & fn & ".pdf"
@@ -533,7 +554,7 @@ Sub viewPdf()
 'fs.CopyFile str & "\" & Split(ActiveDocument.Name, ".")(0) & ".tex", ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".text"
 
 'COMMENT FOLLOWING LINE OUT FOR SAVING IF MALICOUS MACRO DETECTED
-'CreateObject("Shell.Application").Open (ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf")
+CreateObject("Shell.Application").Open (ActiveDocument.Path & Application.PathSeparator & Split(ActiveDocument.Name, ".")(0) & ".pdf")
 
 End Sub
 
