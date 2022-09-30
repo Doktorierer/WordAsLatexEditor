@@ -5,14 +5,14 @@
 
 ## Files/Installation
 
-* **Word template with macros:** `LatexEditor.dotm`. Put this template into the start-up folder of MS Word: `C:\Users\<your username>\AppData\Roaming\Microsoft\Word\STARTUP`
+* **Word template with macros:** `LatexEditor.dotm`. Put this Word template into the start-up folder of MS Word: `C:\Users\<your username>\AppData\Roaming\Microsoft\Word\STARTUP`
 * **LaTeX-ribbon-tab:** `Word Customizations.exportedUI`. In Word, import the customization file in to the ribbon: Right-Click on ribbon -> `Customize the Ribbon...`. This is the most straighforward way to install. However, this simple import overwrites other custom ribbons. However, most users have no custom ribbons (ACROBAT and other add-in ribbon-tabs seems to get preserved;-))
 
 ![LaTeXribbon](https://user-images.githubusercontent.com/113771815/192064971-68e64966-ec35-418c-a8e7-f0a8dcb03c0c.PNG)
 
 ## Features
 
-The VBA-code let you (all functionality through buttons on a new `LaTeX` tab in the Word ribbon):
+The macros in the template let you (all functionality through buttons on a new `LaTeX` tab in the Word ribbon):
 
 * Preview LaTeX-environments: `equation`, `align`, `table`, `figure`, etc.
 * Format some common Latex-markup to gray or white, and text inside `label`, `(eq)ref`, `cite(tp)` to blue
@@ -58,6 +58,8 @@ There is no preview of bibliography. This can be done in 20 seconds manually. Ru
 
 ### Prettified .tex inside Word
 
+This is the same, valid .tex as before, but just with some text formatted as hidden in MS Word, and title, section etc. formatted by Word's `Title`, `Heading 1`, ec., and the environments previewed as pictures (either in the canvas layer (as so-called shapes in MS Word), or in the document layer (as inline shapes).
+
 ![Prettified_1](https://user-images.githubusercontent.com/113771815/193218780-43bcc801-f94e-4846-af6f-27233c4735a8.PNG)
 
 ![Prettified_2](https://user-images.githubusercontent.com/113771815/193218822-ec1c9d33-f94b-4e68-b4c6-4ecec306df72.PNG)
@@ -72,6 +74,7 @@ There is no preview of bibliography. This can be done in 20 seconds manually. Ru
 * Equation numbering is basic (align is not yet recognized with multiple numbers)
 * The snippets when converted to inline-shapes do not wrap properly on a line on their own 
 * Only ASCII character files work surely. The conversion is not fully UTF compatible.
+* Make sure to convert to gray before prevewing, such that the blue highlighting is not shifted 
 * A MsbBox still says that you can browse to `ghostscript` already installed by the common LaTeX distributions `TeXLive` or `MikTeX`, but this (truncated) versions seem not to work
 
 
