@@ -48,6 +48,21 @@ The VBA-code let you (all functionality through buttons on a new `LaTeX` tab in 
 ### Bibliography
 There is no preview of bibliography. This can be done in 20 seconds manually. Run the runLaTeX-macro, or use your preferred Latex-editor to produce a .pdf of your work (which has the reference section), then view the .pdf with word, and paste the reference section at the end.
 
+## Example: test.docx
+
+### Original .tex inside Word
+
+![Original](https://user-images.githubusercontent.com/113771815/193218750-05aeb71a-1396-4813-b470-b6da7d0b177e.PNG)
+
+
+
+### Prettified .tex inside Word
+
+![Prettified_1](https://user-images.githubusercontent.com/113771815/193218780-43bcc801-f94e-4846-af6f-27233c4735a8.PNG)
+
+![Prettified_2](https://user-images.githubusercontent.com/113771815/193218822-ec1c9d33-f94b-4e68-b4c6-4ecec306df72.PNG)
+
+
 
 ## Limitations/Bugs
 
