@@ -1,6 +1,6 @@
 # Word as native LaTeX editor
 
-* Prepare LaTeX documents for revision by co-authors and supervisors using MS Word (i.e., add pictures of environments, hide LaTeX clutter). The revised .doc (which is in fact a LaTeX file) can be edited further in Word, or copied back to your favourite LaTeX editor (just Ctrl-A, Ctrl-C).
+* Tries to make LaTeX documents more beautiful for revision by co-authors and supervisors who use MS Word (i.e., add pictures of LaTeX-environments, hide LaTeX clutter). The revised .doc (which is in fact a LaTeX file) can be edited further in Word, or copied back to your favourite LaTeX editor (just Ctrl-A, Ctrl-C).
 * Use MS Word as basic LaTeX editor (i.e., no file format conversion) 
 
 ## Files/Installation
@@ -14,12 +14,20 @@
 
 The macros in the template let you (all functionality through buttons on a new `LaTeX` tab in the Word ribbon):
 
-* Preview LaTeX-environments: `equation`, `align`, `table`, `figure`, etc.
+* Preview LaTeX-environments (in current version, all together): `equation`, `align`, `table`, `figure`, etc.
 * Format some common Latex-markup to gray or white, and text inside `label`, `(eq)ref`, `cite(tp)` to blue
 * Format LaTeX-section markups into Word headings. With this, navigation and folding of parts is possible
-* Hide LaTeX-markup (using the hidden text feature of Word)
+* Hide LaTeX-markup (using the hidden-text feature of Word)
 * Run pdfLaTeX for the whole Word document and display the resulting .pdf
 * Delete LaTeX-markup
+* A simple unicode <-> tex conversion of very few characters: 
+   * `\item<space>` <-> UTF bullet 
+   * `\textellipsis` <-> `...`
+   * `~` <-> non-breaking white-space
+   * `--` <-> en-dash
+   * `---` <-> em-dash
+   * apostroph conversions (may still have bugs)
+
 
 
 ### Prerequisites
@@ -41,12 +49,12 @@ The macros in the template let you (all functionality through buttons on a new `
      * Set paragraph spacing to zero
 	 * Align pargraphs to block
 	 * LateX-comments must be written with two %% to be seen for formatting (hiding). Hence, comments with single % are comments in Word visible for co-authors
-* Run the VBA-macro (accessible through the new LaTeX-Ribbon) to preview: table, equation, figure, align etc.
-* Prepare the file for revision in MS Word:  Convert the previews into inline pictures, then hide the markup completely. If some LateX clutter is not recognized by hiding, marke this text and set hidden yourself in Word
-* Note: If the pictures (shapes) are converted to inline shapes (shapes is Word jargon) than a control character is added by Word to the text. Hence, delete the shapes first if you want to copy text (e.g. the `RunLaTeX` does this also to run pdftex on the document). 
+* Run the VBA-macro (accessible through the new LaTeX-Ribbon) to preview: table, equation, figure, align etc. as images
+* Prepare the file for revision in MS Word:  Convert the preview-images into inline pictures, then hide the markup completely. If some LateX clutter is not recognized by hiding, marke this text and set hidden yourself in Word
+* Note: If the pictures (shapes) are converted to inline shapes (shapes is Word jargon) than a control character is added by Word to the text. Hence, delete the shapes first with the Ribbon-command if you want to copy the LaTeX-code (e.g. the `RunLaTeX` does this also to run pdftex on the document). 
 
 ### Bibliography
-There is no preview of bibliography. This can be done in 20 seconds manually. Run the runLaTeX-macro, or use your preferred Latex-editor to produce a .pdf of your work (which has the reference section), then view the .pdf with word, and paste the reference section at the end.
+There is no preview of bibliography. This can be done in a minute manually. Run the runLaTeX-macro, or use your preferred Latex-editor to produce a .pdf of your work (which has the reference section), then view the .pdf with word, and paste the reference section at the end.
 
 ## Example: test.docx
 
@@ -74,8 +82,11 @@ This is the same, valid .tex as before, but just with some text formatted as hid
 * Equation numbering is basic (align is not yet recognized with multiple numbers)
 * The snippets when converted to inline-shapes do not wrap properly on a line on their own 
 * Only ASCII character files work surely. The conversion is not fully UTF compatible.
-* Make sure to convert to gray before prevewing, such that the blue highlighting is not shifted 
-* A MsbBox still says that you can browse to `ghostscript` already installed by the common LaTeX distributions `TeXLive` or `MikTeX`, but this (truncated) versions seem not to work
+* Make sure to isuse convert to gray before prevewing (that this, do not hide LaTeX markup), such that the blue highlighting is not shifted
+* A MsbBox may still say that you can browse to `ghostscript` already installed by the common LaTeX distributions `TeXLive` or `MikTeX`, but this (truncated) versions seem not to work
+
+## Good to know
+* To edit a Word-template `.dotm`, do not double-click in Windows Explorer (this opens a derived new document), but use the Open-dialog from Word
 
 
 
